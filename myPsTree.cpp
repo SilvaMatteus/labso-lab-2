@@ -74,9 +74,7 @@ int main()
         // printf("valor ==> %s\n", *it);
         char* proc_directory;
         proc_directory = (char*) calloc(sizeof(char), 50);
-        memcpy(proc_directory, "/proc/", 6);
-        strcat(proc_directory, *it);
-        strcat(proc_directory, "/stat");
+        sprintf(proc_directory, "/proc/%s/stat", *it);
         printf("proc_directory ===> %s\n", proc_directory);
         FILE *arq;
         arq = fopen(proc_directory, "r");
