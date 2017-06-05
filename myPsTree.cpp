@@ -10,7 +10,33 @@ A program to read the /proc directory and create a process tree.
 #include <vector>
 #include <iostream>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#define MAX_LINE 100
+
 using namespace std;
+
+int
+get_pid_max()
+{
+    int pid_max_fd;
+    char *line = (char *) calloc(sizeof(char), MAX_LINE);
+    ssize_t n;
+
+    pid_max_fd = open("/proc/sys/kernel/pid_max", O_RDONLY);
+    if (pid_max_fd == -1) return -1;
+
+    n = read(pid_max_fd, line, MAX_LINE);
+    close(pid_max_fd);
+
+    if (n == -1) return -1;
+
+    int pid_max = atoi(line);
+    free(line);
+
+    return pid_max;
+}
 
 int main()
 {
