@@ -20,20 +20,15 @@ using namespace std;
 int
 get_pid_max()
 {
-    int pid_max_fd;
-    char *line = (char *) calloc(sizeof(char), MAX_LINE);
-    ssize_t n;
+    int pid_max, n;
 
-    pid_max_fd = open("/proc/sys/kernel/pid_max", O_RDONLY);
-    if (pid_max_fd == -1) return -1;
+    FILE *pid_max_fd = fopen("/proc/sys/kernel/pid_max", "r");
+    if (!pid_max_fd) return -1;
 
-    n = read(pid_max_fd, line, MAX_LINE);
-    close(pid_max_fd);
+    n = fscanf(pid_max_fd, "%d", &pid_max);
+    fclose(pid_max_fd);
 
-    if (n == -1) return -1;
-
-    int pid_max = atoi(line);
-    free(line);
+    if (n != 1) return -1;
 
     return pid_max;
 }
