@@ -38,8 +38,17 @@ get_pid_max()
     return pid_max;
 }
 
-int main()
+int
+main()
 {
+    int pid_max = get_pid_max();
+
+    bool ** paternity = (bool **) malloc(sizeof(bool *) * pid_max);
+    for (size_t i; i < pid_max; i++)
+    {
+        paternity[i] = (bool *) calloc(sizeof(bool), pid_max);
+    }
+
     // FILE *arq;
     // arq = fopen("test.txt", "r");
     // char* ch1;
