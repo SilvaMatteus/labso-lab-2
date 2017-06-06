@@ -7,12 +7,8 @@ A program to read the /proc directory and create a process tree.
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
-#include <vector>
 #include <iostream>
 #include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <linux/limits.h>
 
 #define MAX_LINE 100
 
