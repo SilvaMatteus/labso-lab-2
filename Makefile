@@ -1,7 +1,7 @@
 OUTPUT=myPsTree
 SOURCES=*.cpp
 
-xeu: $(SOURCES)
+myPsTree: $(SOURCES)
 	g++ $(SOURCES) $(CXXFLAGS) -o $(OUTPUT)
 
 clean:
