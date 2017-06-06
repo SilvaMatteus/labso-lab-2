@@ -12,6 +12,7 @@ A program to read the /proc directory and create a process tree.
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <linux/limits.h>
 
 #define MAX_LINE 100
 
@@ -38,62 +39,60 @@ main()
 {
     int pid_max = get_pid_max();
 
-    bool ** paternity = (bool **) malloc(sizeof(bool *) * pid_max);
-    for (size_t i; i < pid_max; i++)
+    if (pid_max == -1)
     {
-        paternity[i] = (bool *) calloc(sizeof(bool), pid_max);
+        printf("Error reading '/proc/sys/kernel/pid_max' file. Exiting...\n");
+        return 1;
     }
 
-    // FILE *arq;
-    // arq = fopen("test.txt", "r");
-    // char* ch1;
-    // char* ch2;
-    // char* ch3;
-    // ch1 = malloc(sizeof(char)*50);
-    // ch2 = malloc(sizeof(char)*50);
-    // ch3 = malloc(sizeof(char)*50);
-    // fscanf(arq,"%s %s %s", ch1, ch2, ch3);
-    // printf("ola\n");
-    // printf("%s\n", ch2);
-    // printf("ola\n");
+    bool ** paternity = (bool **) malloc(sizeof(bool *) * pid_max + 1);
+    for (size_t i = 0; i < pid_max; i++)
+    {
+        paternity[i] = (bool *) calloc(sizeof(bool), pid_max + 1);
+    }
+
+    bool ** children = (bool **) malloc(sizeof(bool *) * pid_max + 1);
+    for (size_t i = 0; i < pid_max; i++)
+    {
+        children[i] = (bool *) calloc(sizeof(bool), pid_max + 1);
+    }
+
+    char ** proc_comm = (char **) malloc(sizeof(char *) * pid_max + 1);
+    for (size_t i = 0; i < pid_max; i++)
+    {
+        proc_comm[i] = (char *) calloc(sizeof(char), NAME_MAX);
+    }
+
     DIR *dir;
     struct dirent *lsdir;
     dir = opendir("/proc");
-    vector<char*> directories;
+
+    int proc, curr_proc_pid, curr_proc_ppid;
+    char curr_proc_comm[NAME_MAX + 2], curr_proc_state;
+    char proc_directory[50];
+    FILE *arq;
+
 
     while ((lsdir = readdir(dir)) != NULL)
     {
         if (isdigit(lsdir->d_name[0])) // Add to directories list only its name starts with a digit
         {
-            char* dir = (char*) calloc(strlen(lsdir->d_name) +1, 1);
-            memcpy(dir, &lsdir->d_name, strlen(lsdir->d_name));
-            directories.push_back(dir);
-            printf("%s\n", dir);
+            proc = atoi(lsdir->d_name);
+
+            sprintf(proc_directory, "/proc/%s/stat", lsdir->d_name);
+
+            arq = fopen(proc_directory, "r");
+
+            fscanf(arq,"%d %s %c %d", &curr_proc_pid, curr_proc_comm, &curr_proc_state, &curr_proc_ppid);
+
+            fclose(arq);
+
+            children[curr_proc_ppid][curr_proc_pid] = true;
+            paternity[curr_proc_pid][curr_proc_ppid] = true;
+            memcpy(proc_comm[curr_proc_pid], &curr_proc_comm[1], strlen(&curr_proc_comm[1]) - 1);
         }
     }
     closedir(dir);
-
-    for(vector<char*>::iterator it = directories.begin(); it != directories.end(); it++)
-    {
-        // printf("valor ==> %s\n", *it);
-        char* proc_directory;
-        proc_directory = (char*) calloc(sizeof(char), 50);
-        sprintf(proc_directory, "/proc/%s/stat", *it);
-        printf("proc_directory ===> %s\n", proc_directory);
-        FILE *arq;
-        arq = fopen(proc_directory, "r");
-        char* ch1;
-        char* ch2;
-        char* ch3;
-        char* ch4;
-        ch1 = (char*) calloc(sizeof(char), 50);
-        ch2 = (char*) calloc(sizeof(char), 50);
-        ch3 = (char*) calloc(sizeof(char), 50);
-        ch4 = (char*) calloc(sizeof(char), 50);
-        fscanf(arq,"%s %s %s %s", ch1, ch2, ch3, ch4);
-        printf("%s(%s) parent(%s)\n", ch2, ch1, ch4);
-        fclose(arq);
-    }
 
     return 0;
 
