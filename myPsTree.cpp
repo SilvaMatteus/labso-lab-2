@@ -35,14 +35,15 @@ get_pid_max()
 }
 
 void
-print_children(int proc_num, int level, int pid_max) {
+print_children(int proc_num, int level, int pid_max)
+{
     for (size_t i = 0; i < pid_max; i++)
     {
         if (child_alloc[proc_num] && children[proc_num][i])
         {
             for (int t = 0; t < level; t++) printf("\t"); // level-based indentation
 
-            printf("%lu (%s)\n", i, proc_comm[i]);
+            printf("%ss (\e[33;1m%lu\33[0m)\n", proc_comm[i], i);
             print_children(i, level + 1, pid_max);
         }
     }
