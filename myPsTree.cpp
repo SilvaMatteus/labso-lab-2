@@ -9,12 +9,13 @@ A program to read the /proc directory and create a process tree.
 #include <dirent.h>
 #include <iostream>
 #include <string.h>
+#include <time.h>
 
 #define MAX_LINE 100
 
 using namespace std;
 
-bool ** children;
+bool ** children, * child_alloc;
 char ** proc_comm;
 
 int
@@ -37,7 +38,7 @@ void
 print_children(int proc_num, int level, int pid_max) {
     for (size_t i = 0; i < pid_max; i++)
     {
-        if (children[proc_num][i])
+        if (child_alloc[proc_num] && children[proc_num][i])
         {
             for (int t = 0; t < level; t++) printf("\t"); // level-based indentation
 
@@ -50,6 +51,8 @@ print_children(int proc_num, int level, int pid_max) {
 int
 main()
 {
+    clock_t begin = clock();
+
     int pid_max = get_pid_max();
 
     if (pid_max == -1)
@@ -59,16 +62,9 @@ main()
     }
 
     children = (bool **) malloc(sizeof(bool *) * pid_max + 1);
-    for (size_t i = 0; i < pid_max; i++)
-    {
-        children[i] = (bool *) calloc(sizeof(bool), pid_max + 1);
-    }
+    child_alloc = (bool *) calloc(sizeof(bool), pid_max + 1);
 
     proc_comm = (char **) malloc(sizeof(char *) * pid_max + 1);
-    for (size_t i = 0; i < pid_max; i++)
-    {
-        proc_comm[i] = (char *) calloc(sizeof(char), NAME_MAX);
-    }
 
     DIR *dir;
     struct dirent *lsdir;
@@ -94,13 +90,26 @@ main()
 
             fclose(arq);
 
+            if (!child_alloc[curr_proc_ppid])
+            {
+                children[curr_proc_ppid] = (bool *) calloc(sizeof(bool), pid_max + 1);
+                child_alloc[curr_proc_ppid] = true;
+            }
+
             children[curr_proc_ppid][curr_proc_pid] = true;
+
+            proc_comm[curr_proc_pid] = (char *) calloc(sizeof(char), strlen(&curr_proc_comm[1]) - 1 + 1);
             memcpy(proc_comm[curr_proc_pid], &curr_proc_comm[1], strlen(&curr_proc_comm[1]) - 1);
         }
     }
     closedir(dir);
 
     print_children(0, 0, pid_max);
+
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+    printf("%f secs\n", time_spent);
 
     return 0;
 
