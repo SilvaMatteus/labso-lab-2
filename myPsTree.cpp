@@ -18,6 +18,9 @@ A program to read the /proc directory and create a process tree.
 
 using namespace std;
 
+bool ** children;
+char ** proc_comm;
+
 int
 get_pid_max()
 {
@@ -34,6 +37,20 @@ get_pid_max()
     return pid_max;
 }
 
+void
+print_children(int proc_num, int level, int pid_max) {
+    for (size_t i = 0; i < pid_max; i++)
+    {
+        if (children[proc_num][i])
+        {
+            for (int t = 0; t < level; t++) printf("\t"); // level-based indentation
+
+            printf("%lu (%s)\n", i, proc_comm[i]);
+            print_children(i, level + 1, pid_max);
+        }
+    }
+}
+
 int
 main()
 {
@@ -45,19 +62,13 @@ main()
         return 1;
     }
 
-    bool ** paternity = (bool **) malloc(sizeof(bool *) * pid_max + 1);
-    for (size_t i = 0; i < pid_max; i++)
-    {
-        paternity[i] = (bool *) calloc(sizeof(bool), pid_max + 1);
-    }
-
-    bool ** children = (bool **) malloc(sizeof(bool *) * pid_max + 1);
+    children = (bool **) malloc(sizeof(bool *) * pid_max + 1);
     for (size_t i = 0; i < pid_max; i++)
     {
         children[i] = (bool *) calloc(sizeof(bool), pid_max + 1);
     }
 
-    char ** proc_comm = (char **) malloc(sizeof(char *) * pid_max + 1);
+    proc_comm = (char **) malloc(sizeof(char *) * pid_max + 1);
     for (size_t i = 0; i < pid_max; i++)
     {
         proc_comm[i] = (char *) calloc(sizeof(char), NAME_MAX);
@@ -88,11 +99,12 @@ main()
             fclose(arq);
 
             children[curr_proc_ppid][curr_proc_pid] = true;
-            paternity[curr_proc_pid][curr_proc_ppid] = true;
             memcpy(proc_comm[curr_proc_pid], &curr_proc_comm[1], strlen(&curr_proc_comm[1]) - 1);
         }
     }
     closedir(dir);
+
+    print_children(0, 0, pid_max);
 
     return 0;
 
