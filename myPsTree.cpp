@@ -26,7 +26,7 @@ print_children(int proc_num, int level, int pid_max)
         {
             for (int t = 0; t < level; t++) printf("\t"); // level-based indentation
 
-            printf("%s (\e[33;1m%lu\33[0m)\n", proc_comm[i], i);
+            printf("\e[35;1m%s\33[0m (\e[33;1m%lu\33[0m)\n", proc_comm[i], i);
             print_children(i, level + 1, pid_max);
         }
     }
