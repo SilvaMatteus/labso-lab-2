@@ -15,5 +15,5 @@ echo "Compiling topzera and myPstree..."
 echo "..."
 g++ myPsTree.cpp proc_common.cpp -o myPsTree
 echo "..."
-g++ topzera.cpp proc_common.cpp -o topzera -lpthread -lncurses
+g++ topzera.cpp proc_common.cpp -o topzera -lncurses -lpthread -std=c++11
 echo "Done!"

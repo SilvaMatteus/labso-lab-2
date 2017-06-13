@@ -2,11 +2,11 @@
 #include <string>
 #include <pwd.h>
 #include <stdio.h>
-#include <pthread.h>
+#include <thread>
+#include <mutex>
 #include <ncurses.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-
 
 using namespace std;
 
@@ -17,10 +17,10 @@ using namespace std;
 #define CP_YELLOW 3
 #define CP_CYAN 4
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+mutex mtx;
+
 int row, col;
 int o_row, o_col, u_row, u_col;
-
 
 void
 cli(void)
@@ -30,12 +30,12 @@ cli(void)
 
     while (1)
     {
-        pthread_mutex_lock(&mutex);
+        mtx.lock();
         memset(str, 0, 80);
         move(LINES - 1, 0);
         clrtoeol();
         printw("%s", prompt);
-        pthread_mutex_unlock(&mutex);
+        mtx.unlock();
 
         getnstr(str, 80);
         // scanf("%s\n", str);
@@ -45,11 +45,11 @@ cli(void)
             exit(0);
         }
 
-        pthread_mutex_lock(&mutex);
+        mtx.lock();
         move(LINES - 2, 0);
         clrtoeol();
         mvprintw(LINES - 2, 0, "You Entered: %s", str);
-        pthread_mutex_unlock(&mutex);
+        mtx.unlock();
     }
 }
 
@@ -59,7 +59,7 @@ show_process(void)
     int i = 0;
     while (1)
     {
-        pthread_mutex_lock(&mutex);
+        mtx.lock();
         getmaxyx(stdscr, row, col); /* get the number of rows and columns */
         getyx(stdscr, o_row, o_col);
         move(0, 0);
@@ -125,7 +125,7 @@ show_process(void)
 
         move(o_row, o_col);
         refresh();
-        pthread_mutex_unlock(&mutex);
+        mtx.unlock();
         sleep(UPDATE_TIME);
     }
 }
@@ -146,11 +146,10 @@ main()
 
     getmaxyx(stdscr, row, col); /* get the number of rows and columns */
 
-    pthread_t p1, p2;
-    pthread_create(&p1, NULL, (void* (*)(void*))cli, NULL);
-    pthread_create(&p2, NULL, (void* (*)(void*))show_process, NULL);
-    pthread_join(p1, NULL);
-    pthread_join(p2, NULL);
+    thread p1(cli);
+    thread p2(show_process);
+    p1.join();
+    p2.join();
 
     return 0;
 }
