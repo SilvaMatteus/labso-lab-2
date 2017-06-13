@@ -32,7 +32,7 @@ cli(void)
         printw("%s", prompt);
         pthread_mutex_unlock(&mutex);
 
-        getstr(str);
+        getnstr(str, 80);
         // scanf("%s\n", str);
         if (strcmp(str, "q") == 0)
         {
