@@ -8,7 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <pwd.h>
 #include <vector>
+#include <fstream>
 
 #ifdef __APPLE__
 #include <assert.h>
@@ -26,6 +28,7 @@ struct proc_info {
     int ppid;
     char* comm;
     char status;
+    int uid;
 };
 
 std::vector<proc_info>

@@ -64,6 +64,7 @@ get_bsd_process_list()
         curr_proc.pid = (int)result[i].kp_proc.p_pid;
         curr_proc.ppid = (int)result[i].kp_eproc.e_ppid;
         curr_proc.status = result[i].kp_proc.p_stat;
+        curr_proc.uid = (int)result[i].kp_eproc.e_ucred.cr_uid;
 
         curr_proc.comm = (char *)calloc(sizeof(char), strlen(result[i].kp_proc.p_comm));
         memcpy(curr_proc.comm, result[i].kp_proc.p_comm, strlen(result[i].kp_proc.p_comm));
@@ -117,6 +118,7 @@ get_process_list()
     char curr_proc_status;
 
     char *curr_proc_comm = (char *) calloc(NAME_MAX + 2, sizeof(char));
+    char *parse_status;
 
     while ((lsdir = readdir(dir)) != NULL)
     {
@@ -140,6 +142,20 @@ get_process_list()
             
             curr_proc.pid = curr_proc_pid;
             curr_proc.ppid = curr_proc_ppid;
+
+            sprintf(proc_directory, "/proc/%s/status", lsdir->d_name);
+
+            std::ifstream input(proc_directory);
+            for( std::string line; getline( input, line ); )
+            {
+                parse_status = strtok((char *) line.c_str(), " \t");
+                if (!strcmp(parse_status, "Uid:")) {
+                    parse_status = strtok(NULL, " \t");
+                    curr_proc.uid = atoi(parse_status);
+                }
+            }
+
+            input.close();
 
             v_process.push_back(curr_proc);
         }
