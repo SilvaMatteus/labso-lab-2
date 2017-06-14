@@ -1,4 +1,3 @@
-#include "proc_common.h"
 #include <string>
 #include <pwd.h>
 #include <stdio.h>
@@ -8,19 +7,16 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#include "proc_common.h"
+#include "topzera.h"
+
 using namespace std;
-
-#define UPDATE_TIME 1
-
-#define CP_MAGENTA 1
-#define CP_BLUE 2
-#define CP_YELLOW 3
-#define CP_CYAN 4
 
 mutex mtx;
 
 int row, col;
 int o_row, o_col, u_row, u_col;
+char column[MAX_COLUMN_WIDTH + 1], column_value[MAX_COLUMN_WIDTH + 1];
 
 void
 cli(void)
@@ -38,7 +34,6 @@ cli(void)
         mtx.unlock();
 
         getnstr(str, 80);
-        // scanf("%s\n", str);
         if (strcmp(str, "q") == 0)
         {
             endwin();
@@ -54,9 +49,55 @@ cli(void)
 }
 
 void
+print_header(int column_width, const string value, int color_pair)
+{
+    attron(COLOR_PAIR(color_pair));
+    memset(column, '\0', MAX_COLUMN_WIDTH + 1);
+    memset(column, ' ', column_width);
+    memcpy(&column[(column_width - strlen(value.c_str())) / 2], value.c_str(), strlen(value.c_str()));
+    printw("%s", column);
+    attroff(COLOR_PAIR(color_pair));
+}
+
+void
+print_column_value(int column_width, char *column_value, int color_pair)
+{
+    memset(column, '\0', MAX_COLUMN_WIDTH + 1);
+    memset(column, ' ', column_width);
+    memcpy(&column[(column_width - strlen(column_value)) / 2], column_value, strlen(column_value));
+    printw("%s", column);
+    attroff(COLOR_PAIR(color_pair));
+}
+
+void
+print_value(int column_width, int value, int color_pair)
+{
+    attron(COLOR_PAIR(color_pair));
+    sprintf(column_value, "%d", value);
+    print_column_value(column_width, column_value, color_pair);
+}
+
+void
+print_value(int column_width, char *value, int color_pair)
+{
+    attron(COLOR_PAIR(color_pair));
+    sprintf(column_value, "%s", value);
+    print_column_value(column_width, column_value, color_pair);
+}
+
+void
+print_value(int column_width, char value, int color_pair)
+{
+    attron(COLOR_PAIR(color_pair));
+    sprintf(column_value, "%c", value);
+    print_column_value(column_width, column_value, color_pair);
+}
+
+void
 show_process(void)
 {
     int i = 0;
+
     while (1)
     {
         mtx.lock();
@@ -80,45 +121,29 @@ show_process(void)
         printw("RA\n");
         attroff(COLOR_PAIR(CP_BLUE));
         
-        printw("| ");
-        attron(COLOR_PAIR(CP_YELLOW));
-        printw("PID");
-        attroff(COLOR_PAIR(CP_YELLOW));
-        printw(" | ");
-        attron(COLOR_PAIR(CP_BLUE));
-        printw("USER");
-        attroff(COLOR_PAIR(CP_BLUE));
-        printw(" | ");
-        attron(COLOR_PAIR(CP_MAGENTA));
-        printw("PROCNAME");
-        attroff(COLOR_PAIR(CP_MAGENTA));
-        printw(" | ");
-        attron(COLOR_PAIR(CP_CYAN));
-        printw("STATE");
-        attroff(COLOR_PAIR(CP_CYAN));
-        printw("\n");
+        printw("|");
+        print_header(CW_PID, "PID", CP_YELLOW);
+        printw("|");
+        print_header(CW_USER, "USER", CP_BLUE);
+        printw("|");
+        print_header(CW_PROCNAME, "PROCNAME", CP_MAGENTA);
+        printw("|");
+        print_header(CW_STATE, "STATE", CP_CYAN);
+        printw("|\n");
 
         passwd *p_passwd;
         for (size_t i = 0; i < process_list.size() && i < row -4; i++)
         {
             p_passwd = getpwuid(process_list[i].uid);
-            printw("| ");
-            attron(COLOR_PAIR(CP_YELLOW));
-            printw("%d", process_list[i].pid);
-            attroff(COLOR_PAIR(CP_YELLOW));
-            printw(" | ");
-            attron(COLOR_PAIR(CP_BLUE));
-            printw("%s", p_passwd->pw_name);
-            attroff(COLOR_PAIR(CP_BLUE));
-            printw(" | ");
-            attron(COLOR_PAIR(CP_MAGENTA));
-            printw("%s", process_list[i].comm);
-            attroff(COLOR_PAIR(CP_MAGENTA));
-            printw(" | ");
-            attron(COLOR_PAIR(CP_CYAN));
-            printw("%c", process_list[i].status);
-            attroff(COLOR_PAIR(CP_CYAN));
-            printw("\n");
+            printw("|");
+            print_value(CW_PID, process_list[i].pid, CP_YELLOW);
+            printw("|");
+            print_value(CW_USER, p_passwd->pw_name, CP_BLUE);
+            printw("|");
+            print_value(CW_PROCNAME, process_list[i].comm, CP_MAGENTA);
+            printw("|");
+            print_value(CW_STATE, process_list[i].status, CP_CYAN);
+            printw("|\n");
         }
 
         attroff(WA_BOLD);
