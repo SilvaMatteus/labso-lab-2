@@ -14,7 +14,7 @@ using namespace std;
 
 mutex mtx;
 
-int row, col;
+int row, col, user_only;
 int o_row, o_col, u_row, u_col;
 char column[MAX_COLUMN_WIDTH + 1], column_value[MAX_COLUMN_WIDTH + 1];
 
@@ -28,6 +28,9 @@ cli(void)
     {
         mtx.lock();
         memset(str, 0, 80);
+        move(LINES - 2, 0);
+        clrtoeol();
+        mvprintw(LINES - 2, 0, "available commands: (help goes here!)");
         move(LINES - 1, 0);
         clrtoeol();
         printw("%s", prompt);
@@ -41,9 +44,7 @@ cli(void)
         }
 
         mtx.lock();
-        move(LINES - 2, 0);
         clrtoeol();
-        mvprintw(LINES - 2, 0, "You Entered: %s", str);
         mtx.unlock();
     }
 }
@@ -97,7 +98,7 @@ void
 show_process(void)
 {
     int i = 0;
-
+    vector<proc_info> process_list;
     while (1)
     {
         mtx.lock();
@@ -105,7 +106,7 @@ show_process(void)
         getyx(stdscr, o_row, o_col);
         move(0, 0);
 
-        vector<proc_info> process_list = get_process_list(); // Defined at proc_common
+        process_list = get_process_list(); // Defined at proc_common
 
         attron(WA_BOLD);
 
@@ -132,7 +133,7 @@ show_process(void)
         printw("|\n");
 
         passwd *p_passwd;
-        for (size_t i = 0; i < process_list.size() && i < row -4; i++)
+        for (size_t i = 0, j = 0; i < process_list.size() && j < row -4; i++)
         {
             p_passwd = getpwuid(process_list[i].uid);
             printw("|");
@@ -144,6 +145,8 @@ show_process(void)
             printw("|");
             print_value(CW_STATE, process_list[i].status, CP_CYAN);
             printw("|\n");
+
+            j++;
         }
 
         attroff(WA_BOLD);
@@ -159,7 +162,6 @@ int
 main()
 {
     initscr();                  /* start the curses mode */
-    
     // setup colors
     start_color();              /* Start color 			*/
     use_default_colors();
