@@ -119,6 +119,7 @@ get_process_list()
 
     char *curr_proc_comm = (char *) calloc(NAME_MAX + 2, sizeof(char));
     char *parse_status;
+    proc_info *curr_proc;
 
     while ((lsdir = readdir(dir)) != NULL)
     {
@@ -135,13 +136,14 @@ get_process_list()
 
             fclose(arq);
 
-            proc_info curr_proc;
-            curr_proc.status = curr_proc_status;
-            curr_proc.comm = (char *) calloc(sizeof(char), strlen(&curr_proc_comm[1]) - 1 + 1);
-            memcpy(curr_proc.comm, &curr_proc_comm[1], strlen(&curr_proc_comm[1]) - 1);
+            curr_proc = (proc_info *) malloc(sizeof(proc_info));
+
+            curr_proc->status = curr_proc_status;
+            curr_proc->comm = (char *) calloc(sizeof(char), strlen(&curr_proc_comm[1]) - 1 + 1);
+            memcpy(curr_proc->comm, &curr_proc_comm[1], strlen(&curr_proc_comm[1]) - 1);
             
-            curr_proc.pid = curr_proc_pid;
-            curr_proc.ppid = curr_proc_ppid;
+            curr_proc->pid = curr_proc_pid;
+            curr_proc->ppid = curr_proc_ppid;
 
             sprintf(proc_directory, "/proc/%s/status", lsdir->d_name);
 
@@ -151,19 +153,21 @@ get_process_list()
                 parse_status = strtok((char *) line.c_str(), " \t");
                 if (!strcmp(parse_status, "Uid:")) {
                     parse_status = strtok(NULL, " \t");
-                    curr_proc.uid = atoi(parse_status);
+                    curr_proc->uid = atoi(parse_status);
                 }
             }
 
             input.close();
 
-            v_process.push_back(curr_proc);
+            v_process.push_back(*curr_proc);
         }
     }
+
     closedir(dir);
 
     free(curr_proc_comm);
     free(proc_directory);
+    free(curr_proc);
 
     return v_process;
 }
