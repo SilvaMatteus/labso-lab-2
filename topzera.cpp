@@ -6,6 +6,7 @@
 #include <ncurses.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "proc_common.h"
 #include "topzera.h"
@@ -30,7 +31,7 @@ cli(void)
         memset(str, 0, 80);
         move(LINES - 2, 0);
         clrtoeol();
-        mvprintw(LINES - 2, 0, "available commands: (help goes here!)");
+        mvprintw(LINES - 2, 0, "available commands: q --> Quit | kill [1/2] --> Send signal to a process");
         move(LINES - 1, 0);
         clrtoeol();
         printw("%s", prompt);
@@ -41,6 +42,25 @@ cli(void)
         {
             endwin();
             exit(0);
+        }
+        else
+        {
+            char* cmd;
+            char* cmd_pid;
+            char* signal_int;
+            cmd = (char*) calloc(sizeof(char)* 4 +1, 1);
+            cmd_pid = (char*) calloc(sizeof(char), 10);
+            signal_int = (char*) calloc(sizeof(char) +1, 1);
+            cmd = strtok(str, " ");
+            cmd_pid = strtok(NULL, " ");
+            signal_int = strtok(NULL, " ");
+
+            // if (strcmp(cmd, "kill") == 0)
+            // {
+            //     int ret;
+            //     ret = kill(( pid_t ) atoi(cmd_pid), atoi(signal_int));
+            // }
+            free(cmd); free(cmd_pid); free(signal_int);
         }
 
         mtx.lock();
@@ -121,7 +141,7 @@ show_process(void)
         attron(COLOR_PAIR(CP_BLUE));
         printw("RA\n");
         attroff(COLOR_PAIR(CP_BLUE));
-        
+
         printw("|");
         print_header(CW_PID, "PID", CP_YELLOW);
         printw("|");
@@ -165,7 +185,7 @@ main()
     // setup colors
     start_color();              /* Start color 			*/
     use_default_colors();
-    
+
     init_pair(CP_MAGENTA, COLOR_MAGENTA, -1);
     init_pair(CP_BLUE, COLOR_BLUE, -1);
     init_pair(CP_YELLOW, COLOR_YELLOW, -1);
