@@ -15,4 +15,6 @@
 #define CW_PROCNAME 20
 #define CW_STATE 7
 
+#define SAFE_FREE(x) if ((x) != NULL) { free(x); x=NULL; }
+
 #endif

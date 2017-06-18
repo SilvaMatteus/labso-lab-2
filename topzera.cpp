@@ -26,7 +26,7 @@ cli(void)
 {
     char prompt[] = "> ";
     char str[80];
-
+    char *cmd, *cmd_pid, *signal_int;
     while (1)
     {
         mtx.lock();
@@ -47,28 +47,22 @@ cli(void)
         }
         else
         {
-            char* cmd;
-            char* cmd_pid;
-            char* signal_int;
-            cmd = (char*) calloc(sizeof(char)* 4 +1, 1);
-            cmd_pid = (char*) calloc(sizeof(char), 10);
-            signal_int = (char*) calloc(sizeof(char) +1, 1);
             cmd = strtok(str, " ");
             cmd_pid = strtok(NULL, " ");
             signal_int = strtok(NULL, " ");
 
-            // if (strcmp(cmd, "kill") == 0)
-            // {
-            //     int ret;
-            //     ret = kill(( pid_t ) atoi(cmd_pid), atoi(signal_int));
-            // }
-            free(cmd); free(cmd_pid); free(signal_int);
+            if (strcmp(cmd, "kill") == 0)
+            {
+                 int ret;
+                 ret = kill(( pid_t ) atoi(cmd_pid), atoi(signal_int));
+            }
         }
 
         mtx.lock();
         clrtoeol();
         mtx.unlock();
     }
+    SAFE_FREE(cmd); SAFE_FREE(cmd_pid); SAFE_FREE(signal_int);
 }
 
 void
