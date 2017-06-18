@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <string>
 #include <pwd.h>
 #include <stdio.h>
@@ -17,6 +18,7 @@ mutex mtx;
 
 int row, col, user_only;
 int o_row, o_col, u_row, u_col;
+int column_value_len;
 char column[MAX_COLUMN_WIDTH + 1], column_value[MAX_COLUMN_WIDTH + 1];
 
 void
@@ -83,9 +85,10 @@ print_header(int column_width, const string value, int color_pair)
 void
 print_column_value(int column_width, char *column_value, int color_pair)
 {
+    column_value_len = min(column_width, min(MAX_COLUMN_WIDTH, (int) strlen(column_value)));
     memset(column, '\0', MAX_COLUMN_WIDTH + 1);
     memset(column, ' ', column_width);
-    memcpy(&column[(column_width - strlen(column_value)) / 2], column_value, strlen(column_value));
+    memcpy(&column[(column_width - column_value_len) / 2], column_value, column_value_len);
     printw("%s", column);
     attroff(COLOR_PAIR(color_pair));
 }
