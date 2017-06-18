@@ -16,7 +16,7 @@ using namespace std;
 
 mutex mtx;
 
-int row, col, user_only;
+int row, col, user_only = 0;
 int o_row, o_col, u_row, u_col;
 int column_value_len;
 char column[MAX_COLUMN_WIDTH + 1], column_value[MAX_COLUMN_WIDTH + 1];
@@ -31,9 +31,10 @@ cli(void)
     {
         mtx.lock();
         memset(str, 0, 80);
-        move(LINES - 2, 0);
+        move(LINES - 3, 0);
         clrtoeol();
-        mvprintw(LINES - 2, 0, "available commands: q --> Quit | kill [1/2] --> Send signal to a process");
+        mvprintw(LINES - 3, 0, "available commands: q --> Quit | kill PID SIGNAL --> Send SIGNAL to a process (PID)");
+        mvprintw(LINES - 2, 0, "                    u --> Toggle list user processes only");
         move(LINES - 1, 0);
         clrtoeol();
         printw("%s", prompt);
@@ -44,6 +45,10 @@ cli(void)
         {
             endwin();
             exit(0);
+        }
+        else if (strcmp(str, "u") == 0)
+        {
+            user_only = !user_only;
         }
         else
         {
@@ -112,9 +117,24 @@ print_value(int column_width, char value, int color_pair)
 }
 
 void
+print_p(proc_info p)
+{
+    passwd *p_passwd = getpwuid(p.uid);
+    printw("|");
+    print_value(CW_PID, p.pid, CP_YELLOW);
+    printw("|");
+    print_value(CW_USER, p_passwd->pw_name, CP_BLUE);
+    printw("|");
+    print_value(CW_PROCNAME, p.comm, CP_MAGENTA);
+    printw("|");
+    print_value(CW_STATE, p.status, CP_CYAN);
+    printw("|\n");
+}
+
+void
 show_process(void)
 {
-    int i = 0;
+    size_t i = 0, j = 0;
     vector<proc_info> process_list;
     while (1)
     {
@@ -149,20 +169,19 @@ show_process(void)
         print_header(CW_STATE, "STATE", CP_CYAN);
         printw("|\n");
 
-        passwd *p_passwd;
-        for (size_t i = 0, j = 0; i < process_list.size() && j < row -4; i++)
+        i = 0, j = 0;
+        for (; i < process_list.size() && j < row - 5; i++)
         {
-            p_passwd = getpwuid(process_list[i].uid);
-            printw("|");
-            print_value(CW_PID, process_list[i].pid, CP_YELLOW);
-            printw("|");
-            print_value(CW_USER, p_passwd->pw_name, CP_BLUE);
-            printw("|");
-            print_value(CW_PROCNAME, process_list[i].comm, CP_MAGENTA);
-            printw("|");
-            print_value(CW_STATE, process_list[i].status, CP_CYAN);
-            printw("|\n");
+            if (user_only && process_list[i].uid != 12321)
+                continue;
+            print_p(process_list[i]);
 
+            j++;
+        }
+
+        while (j < row - 5) {
+            clrtoeol();
+            printw("\n");
             j++;
         }
 
