@@ -16,7 +16,7 @@ using namespace std;
 
 mutex mtx;
 
-int row, col, user_only = 0;
+int row, col, user_only = 0, ascending = 1;
 int o_row, o_col, u_row, u_col;
 int column_value_len;
 char column[MAX_COLUMN_WIDTH + 1], column_value[MAX_COLUMN_WIDTH + 1];
@@ -34,7 +34,7 @@ cli(void)
         move(LINES - 3, 0);
         clrtoeol();
         mvprintw(LINES - 3, 0, "available commands: q --> Quit | kill PID SIGNAL --> Send SIGNAL to a process (PID)");
-        mvprintw(LINES - 2, 0, "                    u --> Toggle list user processes only");
+        mvprintw(LINES - 2, 0, "                    u --> Toggle list user processes only | o -> toggle ascending/descending sorting by pid");
         move(LINES - 1, 0);
         clrtoeol();
         printw("%s", prompt);
@@ -47,9 +47,9 @@ cli(void)
             exit(0);
         }
         else if (strcmp(str, "u") == 0)
-        {
             user_only = !user_only;
-        }
+        else if (strcmp(str, "o") == 0)
+            ascending = !ascending;
         else
         {
             cmd = strtok(str, " ");
@@ -131,6 +131,12 @@ print_p(proc_info p)
     printw("|\n");
 }
 
+bool compare_process_pid(proc_info p1, proc_info p2) {
+    if (ascending)
+        return (p1.pid < p2.pid);
+    return (p1.pid > p2.pid);
+}
+
 void
 show_process(void)
 {
@@ -144,6 +150,7 @@ show_process(void)
         move(0, 0);
 
         process_list = get_process_list(); // Defined at proc_common
+        sort(process_list.begin(), process_list.end(), compare_process_pid);
 
         attron(WA_BOLD);
 
@@ -172,7 +179,7 @@ show_process(void)
         i = 0, j = 0;
         for (; i < process_list.size() && j < row - 5; i++)
         {
-            if (user_only && process_list[i].uid != 12321)
+            if (user_only && process_list[i].uid != getuid())
                 continue;
             print_p(process_list[i]);
 
