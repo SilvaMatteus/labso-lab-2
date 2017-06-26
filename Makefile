@@ -11,7 +11,7 @@ myPsTree: $(MYPSTREE_SOURCES)
 	g++ $(MYPSTREE_SOURCES) -o $(MYPSTREE_OUTPUT)
 
 topzera: $(TOPZERA_SOURCES)
-	g++ $(TOPZERA_SOURCES) -o $(TOPZERA_OUTPUT) $(TOPZERA_CXXFLAGS) -std=c++11
+	g++ $(TOPZERA_SOURCES) -o $(TOPZERA_OUTPUT) $(TOPZERA_CXXFLAGS) -std=c++11 -pthread -Wl,--no-as-needed
 
 clean:
 
